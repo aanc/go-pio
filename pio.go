@@ -55,7 +55,7 @@ func main() {
 
 	if config.Auth.Token == "" {
 		fmt.Println("Please edit the file " + usr.HomeDir + "/.piorc with your OAuth token.")
-		fmt.Println("To get this token, go to http://pio.nknu.net")
+		fmt.Println("To get this token, go to http://aanc.github.io/go-pio")
 		os.Exit(1)
 	}
 	fmt.Printf("Using token %s\n", config.Auth.Token)
