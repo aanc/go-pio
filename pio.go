@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/user"
+	"strconv"
 
 	"github.com/antonholmquist/jason"
 	"gopkg.in/gcfg.v1"
@@ -42,6 +43,59 @@ token=
 	return string(configFileContent)
 }
 
+func send(t string, uri string, arguments string) (*jason.Object, error) {
+	url := "https://api.put.io/v2" + uri + "?oauth_token=" + t + "&" + arguments
+	response, err := http.Get(url)
+	check(err)
+	defer response.Body.Close()
+
+	contents, err := ioutil.ReadAll(response.Body)
+	check(err)
+
+	v, err := jason.NewObjectFromBytes([]byte(contents))
+	return v, err
+}
+
+var treeDepth = 0
+
+func list(t string, fileID int64) {
+	v, err := send(t, "/files/list", "parent_id="+strconv.FormatInt(fileID, 10))
+	check(err)
+
+	status, _ := v.GetString("status")
+	if status == "ERROR" {
+		fmt.Println(`
+Error during put.io API access, please check your internet connectivity and your
+token configuration. See --help for more info.`)
+		os.Exit(1)
+	}
+
+	// Tree formatting
+	spaces := ""
+	for i := 0; i < treeDepth; i++ {
+		spaces = spaces + "\t"
+	}
+
+	files, _ := v.GetObjectArray("files")
+	for _, file := range files {
+		name, _ := file.GetString("name")
+		contentType, _ := file.GetString("content_type")
+		id, _ := file.GetInt64("id")
+		fmt.Printf("%s%d: [%s] %s\n", spaces, id, contentType, name)
+
+		if contentType == "application/x-directory" {
+			treeDepth++
+			list(t, id)
+			treeDepth--
+		}
+	}
+}
+
+func info(t string) {
+	fmt.Println("Account information ...")
+
+}
+
 func main() {
 	// Get home directory
 	usr, err := user.Current()
@@ -66,40 +120,13 @@ func main() {
 	action := os.Args[1]
 	switch action {
 	case "list":
-		list(config.Auth.Token)
+		var initialFolder int64
+		if len(os.Args) > 2 {
+			initialFolder, _ = strconv.ParseInt(os.Args[2], 10, 64)
+		}
+		list(config.Auth.Token, initialFolder)
 	case "info":
 		info(config.Auth.Token)
 	}
-
-}
-
-func list(t string) {
-	response, err := http.Get("https://api.put.io/v2/files/list?oauth_token=" + t)
-	check(err)
-	defer response.Body.Close()
-
-	contents, err := ioutil.ReadAll(response.Body)
-	check(err)
-
-	v, err := jason.NewObjectFromBytes([]byte(contents))
-	check(err)
-
-	status, _ := v.GetString("status")
-	if status == "ERROR" {
-		fmt.Println("Error during put.io API access, please check your internet connectivity and your token configuration.")
-		fmt.Println("See --help for more info")
-		os.Exit(1)
-	}
-
-	files, _ := v.GetObjectArray("files")
-	for i, file := range files {
-		name, _ := file.GetString("name")
-		contentType, _ := file.GetString("content_type")
-		fmt.Printf("%.2d: [%s] %s\n", i, contentType, name)
-	}
-}
-
-func info(t string) {
-	fmt.Println("Account information ...")
 
 }
