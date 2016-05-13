@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"os/user"
 
+	"github.com/antonholmquist/jason"
 	"gopkg.in/gcfg.v1"
 )
 
@@ -19,6 +21,7 @@ type Configuration struct {
 
 func check(e error) {
 	if e != nil {
+		fmt.Printf("%s", e)
 		panic(e)
 	}
 }
@@ -58,6 +61,45 @@ func main() {
 		fmt.Println("To get this token, go to http://aanc.github.io/go-pio")
 		os.Exit(1)
 	}
-	fmt.Printf("Using token %s\n", config.Auth.Token)
+
+	// Action routing
+	action := os.Args[1]
+	switch action {
+	case "list":
+		list(config.Auth.Token)
+	case "info":
+		info(config.Auth.Token)
+	}
+
+}
+
+func list(t string) {
+	response, err := http.Get("https://api.put.io/v2/files/list?oauth_token=" + t)
+	check(err)
+	defer response.Body.Close()
+
+	contents, err := ioutil.ReadAll(response.Body)
+	check(err)
+
+	v, err := jason.NewObjectFromBytes([]byte(contents))
+	check(err)
+
+	status, _ := v.GetString("status")
+	if status == "ERROR" {
+		fmt.Println("Error during put.io API access, please check your internet connectivity and your token configuration.")
+		fmt.Println("See --help for more info")
+		os.Exit(1)
+	}
+
+	files, _ := v.GetObjectArray("files")
+	for i, file := range files {
+		name, _ := file.GetString("name")
+		contentType, _ := file.GetString("content_type")
+		fmt.Printf("%.2d: [%s] %s\n", i, contentType, name)
+	}
+}
+
+func info(t string) {
+	fmt.Println("Account information ...")
 
 }
