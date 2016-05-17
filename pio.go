@@ -140,8 +140,8 @@ func main() {
 		usage(0)
 	}
 
-	action := os.Args[1]
-	switch action {
+	command := os.Args[1]
+	switch command {
 	case "list":
 		var initialFolder int64
 		if len(os.Args) > 2 {
@@ -151,5 +151,10 @@ func main() {
 
 	case "info":
 		commandInfo()
+
+	default:
+		fmt.Println("Error: unkonwn command '" + command + "'")
+		usage(2)
 	}
+
 }
