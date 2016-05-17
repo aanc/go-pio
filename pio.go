@@ -96,6 +96,20 @@ func info(t string) {
 
 }
 
+func usage(exitCode int) {
+	fmt.Println(`Usage: pio [options] <command> args ...
+
+Options:
+  ...
+
+Commands:
+  list      List files
+  config    Update configuration file
+  search    Search for files matching the given word
+
+Run 'pio <command> --help' for more information about a command.`)
+}
+
 func main() {
 	// Get home directory
 	usr, err := user.Current()
@@ -117,16 +131,20 @@ func main() {
 	}
 
 	// Action routing
-	action := os.Args[1]
-	switch action {
-	case "list":
-		var initialFolder int64
-		if len(os.Args) > 2 {
-			initialFolder, _ = strconv.ParseInt(os.Args[2], 10, 64)
+	if len(os.Args) > 1 {
+		action := os.Args[1]
+		switch action {
+		case "list":
+			var initialFolder int64
+			if len(os.Args) > 2 {
+				initialFolder, _ = strconv.ParseInt(os.Args[2], 10, 64)
+			}
+			list(config.Auth.Token, initialFolder)
+		case "info":
+			info(config.Auth.Token)
 		}
-		list(config.Auth.Token, initialFolder)
-	case "info":
-		info(config.Auth.Token)
+	} else {
+		usage(0)
 	}
 
 }
