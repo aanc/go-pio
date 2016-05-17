@@ -4,20 +4,38 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"net/http"
 	"os"
 	"os/user"
 	"strconv"
 
-	"github.com/antonholmquist/jason"
+	"github.com/aanc/pio/putio"
+
 	"gopkg.in/gcfg.v1"
 )
+
+var putioAPI putio.Config
 
 // Configuration : used to store config retrieved from config file
 type Configuration struct {
 	Auth struct {
 		Token string `gcfg:"token"`
 	}
+}
+
+func usage(exitCode int) {
+	fmt.Println(`Usage: pio [options] <command> args ...
+
+Options:
+  ...
+
+Commands:
+  list      List files
+  config    Update configuration file
+  search    Search for files matching the given word
+
+Run 'pio <command> --help' for more information about a command.`)
+
+	os.Exit(exitCode)
 }
 
 func check(e error) {
@@ -43,32 +61,11 @@ token=
 	return string(configFileContent)
 }
 
-func send(t string, uri string, arguments string) (*jason.Object, error) {
-	url := "https://api.put.io/v2" + uri + "?oauth_token=" + t + "&" + arguments
-	response, err := http.Get(url)
-	check(err)
-	defer response.Body.Close()
-
-	contents, err := ioutil.ReadAll(response.Body)
-	check(err)
-
-	v, err := jason.NewObjectFromBytes([]byte(contents))
-	return v, err
-}
-
 var treeDepth = 0
 
-func list(t string, fileID int64) {
-	v, err := send(t, "/files/list", "parent_id="+strconv.FormatInt(fileID, 10))
+func commandList(fileID int64) {
+	v, err := putioAPI.List(fileID)
 	check(err)
-
-	status, _ := v.GetString("status")
-	if status == "ERROR" {
-		fmt.Println(`
-Error during put.io API access, please check your internet connectivity and your
-token configuration. See --help for more info.`)
-		os.Exit(1)
-	}
 
 	// Tree formatting
 	spaces := ""
@@ -85,29 +82,18 @@ token configuration. See --help for more info.`)
 
 		if contentType == "application/x-directory" {
 			treeDepth++
-			list(t, id)
+			commandList(id)
 			treeDepth--
 		}
 	}
 }
 
-func info(t string) {
-	fmt.Println("Account information ...")
+func commandInfo() {
+	info, err := putioAPI.AccountInfo()
+	check(err)
 
-}
-
-func usage(exitCode int) {
-	fmt.Println(`Usage: pio [options] <command> args ...
-
-Options:
-  ...
-
-Commands:
-  list      List files
-  config    Update configuration file
-  search    Search for files matching the given word
-
-Run 'pio <command> --help' for more information about a command.`)
+	username, _ := info.GetString("info", "username")
+	fmt.Println("  Username: " + username)
 }
 
 func main() {
@@ -117,8 +103,8 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// Read configuration from file
 	config := Configuration{}
-
 	err = gcfg.ReadStringInto(&config, initAndReadConfigFile(usr.HomeDir+"/.piorc"))
 	if err != nil {
 		log.Fatalf("Failed to parse config file: %s", err)
@@ -130,21 +116,24 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Initialize put.io API
+	putioAPI.SetToken(config.Auth.Token)
+
 	// Action routing
-	if len(os.Args) > 1 {
-		action := os.Args[1]
-		switch action {
-		case "list":
-			var initialFolder int64
-			if len(os.Args) > 2 {
-				initialFolder, _ = strconv.ParseInt(os.Args[2], 10, 64)
-			}
-			list(config.Auth.Token, initialFolder)
-		case "info":
-			info(config.Auth.Token)
-		}
-	} else {
+	if len(os.Args) <= 1 {
 		usage(0)
 	}
 
+	action := os.Args[1]
+	switch action {
+	case "list":
+		var initialFolder int64
+		if len(os.Args) > 2 {
+			initialFolder, _ = strconv.ParseInt(os.Args[2], 10, 64)
+		}
+		commandList(initialFolder)
+
+	case "info":
+		commandInfo()
+	}
 }
