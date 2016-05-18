@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"github.com/aanc/pio/putio"
+	"github.com/olekukonko/tablewriter"
 
 	"gopkg.in/gcfg.v1"
 )
@@ -112,6 +113,28 @@ func commandInfo() {
 `, username, mail, diskUsed, diskSize, diskAvail, planExpirationDate)
 }
 
+func commandTransfers() {
+	json, err := putioAPI.Transfers()
+	check(err)
+
+	data := [][]string{}
+
+	transfers, _ := json.GetObjectArray("transfers")
+	for _, t := range transfers {
+		name, _ := t.GetString("name")
+		status, _ := t.GetString("status")
+		id, _ := t.GetInt64("id")
+		line := []string{status, name, strconv.FormatInt(id, 10)}
+		data = append(data, line)
+	}
+
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{"Status", "Name", "ID"})
+	table.SetBorder(false) // Set Border to false
+	table.AppendBulk(data) // Add Bulk Data
+	table.Render()
+}
+
 func main() {
 	// Get home directory
 	usr, err := user.Current()
@@ -151,6 +174,9 @@ func main() {
 
 	case "info":
 		commandInfo()
+
+	case "transfers":
+		commandTransfers()
 
 	default:
 		fmt.Println("Error: unkonwn command '" + command + "'")

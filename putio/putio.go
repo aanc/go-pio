@@ -62,3 +62,10 @@ func (c *Config) AccountInfo() (*jason.Object, error) {
 	v, err := send(c.token, "/account/info", "")
 	return v, err
 }
+
+// Transfers returns a json object containing transfers list, as described
+// at https://api.put.io/v2/docs/transfers.html#list
+func (c *Config) Transfers() (*jason.Object, error) {
+	v, err := send(c.token, "/transfers/list", "")
+	return v, err
+}
