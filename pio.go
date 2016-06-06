@@ -7,9 +7,9 @@ import (
 	"os"
 	"os/user"
 	"strconv"
+	"text/tabwriter"
 
 	"github.com/aanc/pio/putio"
-	"github.com/olekukonko/tablewriter"
 
 	"gopkg.in/gcfg.v1"
 )
@@ -119,22 +119,22 @@ func commandTransfers() {
 	json, err := putioAPI.Transfers()
 	check(err)
 
-	data := [][]string{}
+	w := new(tabwriter.Writer)
+	w.Init(os.Stdout, 0, 8, 1, '\t', 0)
+
+	// data := [][]string{}
+	fmt.Fprintln(w, "ID\tFile name\tStatus")
+	fmt.Fprintln(w, "\t\t")
 
 	transfers, _ := json.GetObjectArray("transfers")
 	for _, t := range transfers {
 		name, _ := t.GetString("name")
 		status, _ := t.GetString("status")
 		id, _ := t.GetInt64("id")
-		line := []string{status, name, strconv.FormatInt(id, 10)}
-		data = append(data, line)
-	}
 
-	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"Status", "Name", "ID"})
-	table.SetBorder(false) // Set Border to false
-	table.AppendBulk(data) // Add Bulk Data
-	table.Render()
+		fmt.Fprintln(w, strconv.FormatInt(id, 10)+"\t"+name+"\t"+status)
+	}
+	w.Flush()
 }
 
 func main() {
