@@ -10,6 +10,7 @@ import (
 	"text/tabwriter"
 
 	"github.com/aanc/pio/putio"
+	"github.com/dustin/go-humanize"
 
 	"gopkg.in/gcfg.v1"
 )
@@ -122,17 +123,37 @@ func commandTransfers() {
 	w := new(tabwriter.Writer)
 	w.Init(os.Stdout, 0, 8, 1, '\t', 0)
 
-	// data := [][]string{}
-	fmt.Fprintln(w, "ID\tFile name\tStatus")
-	fmt.Fprintln(w, "\t\t")
+	fmt.Fprint(w, "ID")
+	fmt.Fprint(w, "\tFile ID")
+	fmt.Fprint(w, "\tFile name")
+	fmt.Fprint(w, "\tStatus")
+	fmt.Fprint(w, "\tSize")
+	fmt.Fprint(w, "\tDown")
+	fmt.Fprint(w, "\tUp")
+	fmt.Fprint(w, "\tRatio")
+	fmt.Fprintln(w, "")
 
 	transfers, _ := json.GetObjectArray("transfers")
 	for _, t := range transfers {
 		name, _ := t.GetString("name")
 		status, _ := t.GetString("status")
 		id, _ := t.GetInt64("id")
+		downSpeed, _ := t.GetInt64("down_speed")
+		upSpeed, _ := t.GetInt64("up_speed")
+		size, _ := t.GetInt64("size")
+		ratio, _ := t.GetFloat64("current_ratio")
+		fileID, _ := t.GetInt64("file_id")
 
-		fmt.Fprintln(w, strconv.FormatInt(id, 10)+"\t"+name+"\t"+status)
+		fmt.Fprint(w, strconv.FormatInt(id, 10))
+		fmt.Fprint(w, "\t"+strconv.FormatInt(fileID, 10))
+		fmt.Fprint(w, "\t"+name)
+		fmt.Fprint(w, "\t"+status)
+		fmt.Fprint(w, "\t"+humanize.Bytes(uint64(size)))
+		fmt.Fprint(w, "\t"+humanize.Bytes(uint64(downSpeed))+"/s")
+		fmt.Fprint(w, "\t"+humanize.Bytes(uint64(upSpeed))+"/s")
+		fmt.Fprint(w, "\t"+strconv.FormatFloat(ratio, 'f', -1, 64))
+		fmt.Fprintln(w, "")
+
 	}
 	w.Flush()
 }
