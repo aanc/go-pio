@@ -30,9 +30,11 @@ Options:
   ...
 
 Commands:
-  list      List files
-  config    Update configuration file
-  search    Search for files matching the given word
+  config       Update configuration file
+  info         Display information about configured put.io account
+  list         List files
+  search       Search for files matching the given word
+  transfers    Get transferts list
 
 Run 'pio <command> --help' for more information about a command.`)
 
