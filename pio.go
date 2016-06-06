@@ -158,6 +158,13 @@ func commandTransfers() {
 	w.Flush()
 }
 
+func commandDlLink(fileID int64) {
+	link, err := putioAPI.GetDownloadLink(fileID)
+	check(err)
+
+	fmt.Println(link)
+}
+
 func main() {
 	// Get home directory
 	usr, err := user.Current()
@@ -200,6 +207,13 @@ func main() {
 
 	case "transfers":
 		commandTransfers()
+
+	case "dllink":
+		var fileToDL int64
+		if len(os.Args) > 2 {
+			fileToDL, _ = strconv.ParseInt(os.Args[2], 10, 64)
+		}
+		commandDlLink(fileToDL)
 
 	default:
 		fmt.Println("Error: unkonwn command '" + command + "'")

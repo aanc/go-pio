@@ -1,9 +1,11 @@
 package putio
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 
@@ -68,4 +70,36 @@ func (c *Config) AccountInfo() (*jason.Object, error) {
 func (c *Config) Transfers() (*jason.Object, error) {
 	v, err := send(c.token, "/transfers/list", "")
 	return v, err
+}
+
+// GetDownloadLink returns the download URL of a given fileID as a string
+func (c *Config) GetDownloadLink(fileID int64) (string, error) {
+	reqURL := "https://api.put.io/v2" + "/files/" + strconv.FormatInt(fileID, 10) + "/download" + "?oauth_token=" + c.token
+
+	// put.io returns a first response containing a redirect URL when a download
+	// is requested. We need to catch that redirect, as we only want the URL, not
+	// the whole file.
+
+	// Custom redirect error
+	var RedirectAttemptedError = errors.New("redirect")
+
+	// Custom http client, so we can use the redirect error
+	client := &http.Client{
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return RedirectAttemptedError
+		},
+	}
+
+	// Requesting the file download using the custom client
+	response, err := client.Head(reqURL)
+
+	// Checking if we get the redirect error
+	if urlError, ok := err.(*url.Error); ok && urlError.Err == RedirectAttemptedError {
+		err = nil
+	}
+	check(err)
+	defer response.Body.Close()
+
+	// Extracting download link from headers
+	return response.Header.Get("Location"), err
 }
