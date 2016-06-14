@@ -12,6 +12,8 @@ import (
 	"github.com/antonholmquist/jason"
 )
 
+const putioAPIURL = "https://api.put.io/v2"
+
 // Config structure is used to store put.io connection info
 type Config struct {
 	token string
@@ -31,7 +33,7 @@ func (c *Config) SetToken(t string) {
 
 // Send sends a request to put.io API using the given token
 func send(t string, uri string, arguments string) (*jason.Object, error) {
-	url := "https://api.put.io/v2" + uri + "?oauth_token=" + t + "&" + arguments
+	url := putioAPIURL + uri + "?oauth_token=" + t + "&" + arguments
 	response, err := http.Get(url)
 	check(err)
 	defer response.Body.Close()
@@ -74,7 +76,7 @@ func (c *Config) Transfers() (*jason.Object, error) {
 
 // GetDownloadLink returns the download URL of a given fileID as a string
 func (c *Config) GetDownloadLink(fileID int64) (string, error) {
-	reqURL := "https://api.put.io/v2" + "/files/" + strconv.FormatInt(fileID, 10) + "/download" + "?oauth_token=" + c.token
+	reqURL := putioAPIURL + "/files/" + strconv.FormatInt(fileID, 10) + "/download" + "?oauth_token=" + c.token
 
 	// put.io returns a first response containing a redirect URL when a download
 	// is requested. We need to catch that redirect, as we only want the URL, not
