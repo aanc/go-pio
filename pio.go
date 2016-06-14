@@ -32,6 +32,7 @@ Options:
 
 Commands:
   config       Update configuration file
+  link         Get file download link
   info         Display information about configured put.io account
   list         List files
   search       Search for files matching the given word
@@ -208,7 +209,7 @@ func main() {
 	case "transfers":
 		commandTransfers()
 
-	case "dllink":
+	case "link":
 		var fileToDL int64
 		if len(os.Args) > 2 {
 			fileToDL, _ = strconv.ParseInt(os.Args[2], 10, 64)
