@@ -105,3 +105,9 @@ func (c *Config) GetDownloadLink(fileID int64) (string, error) {
 	// Extracting download link from headers
 	return response.Header.Get("Location"), err
 }
+
+// Events returns a json object listing the account's events
+func (c *Config) Events() (*jason.Object, error) {
+	v, err := send(c.token, "/events/list", "")
+	return v, err
+}

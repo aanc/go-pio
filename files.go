@@ -11,11 +11,11 @@ func commandFiles(args []string) {
 	if len(args) > 0 {
 		action = args[0]
 	} else {
-		action = "help"
+		action = helpAction
 	}
 
 	switch action {
-	case "list":
+	case listAction:
 		var initialFolder int64
 		if len(args) > 0 {
 			initialFolder, _ = strconv.ParseInt(args[0], 10, 64)
@@ -32,7 +32,7 @@ func commandFiles(args []string) {
 		}
 		commandFilesGetLink(fileID)
 
-	case "help":
+	case helpAction:
 		commandFilesHelp(0)
 
 	default:

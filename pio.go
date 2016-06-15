@@ -12,6 +12,9 @@ import (
 	"gopkg.in/gcfg.v1"
 )
 
+const listAction = "list"
+const helpAction = "help"
+
 var putioAPI putio.Config
 
 // Configuration : used to store config retrieved from config file
@@ -50,8 +53,8 @@ Commands:
       playlist         (not implemented)
 
   events               Manage dashboard events
-      list             (not implemented)
-      delete           (not implemented)
+      list
+      clear            (not implemented)
 
   transfers            Manage active or finished transfers
       list             (not implemented)
@@ -144,6 +147,9 @@ func main() {
 
 	case "transfers":
 		commandTransfers(otherArgs)
+
+	case "events":
+		commandEvents(otherArgs)
 
 	default:
 		fmt.Println("Error: unkonwn command '" + command + "'")

@@ -14,14 +14,14 @@ func commandTransfers(args []string) {
 	if len(args) > 0 {
 		action = args[0]
 	} else {
-		action = "list"
+		action = listAction
 	}
 
 	switch action {
-	case "list":
+	case listAction:
 		commandTransfersList()
 
-	case "help":
+	case helpAction:
 		commandTransfersHelp(0)
 
 	default:
